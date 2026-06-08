@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function App() {
   const [location, setLocation] = useState(null);
@@ -6,6 +6,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
 
   const getCurrentLocation = () => {
+    // Check browser support
     if (!navigator.geolocation) {
       setError("Geolocation is not supported");
       return;
@@ -13,30 +14,23 @@ export default function App() {
 
     setLoading(true);
     setError("");
-    setLocation(null);
 
+    // Live accurate tracking
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
-        const accuracy = Math.round(position.coords.accuracy);
-
-        navigator.geolocation.clearWatch(watchId);
-        setLoading(false);
-
-        if (accuracy > 50) {
-          setError(
-            `Location is not accurate enough. Accuracy is ${accuracy} meters. Try again outside or near a window.`
-          );
-          return;
-        }
-
         setLocation({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
-          accuracy,
+          accuracy: position.coords.accuracy,
         });
-      },
-      (error) => {
+
+        setLoading(false);
+
+        // Stop watching after getting location
         navigator.geolocation.clearWatch(watchId);
+      },
+
+      (error) => {
         setLoading(false);
 
         if (error.code === 1) {
@@ -49,6 +43,7 @@ export default function App() {
           setError("Unknown Error");
         }
       },
+
       {
         enableHighAccuracy: true,
         timeout: 15000,
@@ -58,13 +53,21 @@ export default function App() {
   };
 
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial" }}>
+    <div
+      style={{
+        padding: "20px",
+        fontFamily: "Arial",
+      }}
+    >
       <h2>Get Current Location</h2>
 
       <button
         onClick={getCurrentLocation}
         disabled={loading}
-        style={{ padding: "10px 20px", cursor: "pointer" }}
+        style={{
+          padding: "10px 20px",
+          cursor: "pointer",
+        }}
       >
         {loading ? "Getting Location..." : "Get Location"}
       </button>
@@ -80,16 +83,16 @@ export default function App() {
           <h3>Current Location</h3>
 
           <p>
-            <strong>Latitude:</strong> {location.latitude}
+            <strong>Latitude:</strong>{" "}
+            {location.latitude}
           </p>
 
           <p>
-            <strong>Longitude:</strong> {location.longitude}
+            <strong>Longitude:</strong>{" "}
+            {location.longitude}
           </p>
 
-          <p>
-            <strong>Accuracy:</strong> {location.accuracy} meters
-          </p>
+
 
           <a
             href={`https://www.google.com/maps?q=${location.latitude},${location.longitude}`}
